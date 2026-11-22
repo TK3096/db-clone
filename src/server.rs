@@ -1,9 +1,8 @@
 //! Server entry point: bind, then serve.
-//!
-//! STUB (mentor): signatures agreed in step 1. Bodies are `todo!()`; fill them in.
 
-use std::net::SocketAddr;
+use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use crate::error::Error;
 
@@ -20,23 +19,46 @@ pub struct Database {}
 
 /// A bound, not-yet-serving server.
 pub struct Server {
-    // Your fields go here (e.g. the listener and an `Arc<Database>`).
+    listener: TcpListener,
+    addr: SocketAddr,
+    db: Arc<Database>,
 }
 
 impl Server {
     /// Binds `127.0.0.1:<config.port>`. Does not accept connections yet.
     pub fn bind(config: Config) -> Result<Server, Error> {
-        let _ = config;
-        todo!()
+        let listener = TcpListener::bind(("127.0.0.1", config.port))?;
+        let addr = listener.local_addr()?;
+
+        Ok(Server {
+            listener,
+            addr,
+            db: Arc::new(Database {}),
+        })
     }
 
     /// The address actually bound (the real port when `config.port == 0`).
     pub fn local_addr(&self) -> SocketAddr {
-        todo!()
+        self.addr
     }
 
-    /// Accept loop. Does not return unless an error occurs.
+    /// Accepts connections forever and handles each one inline (no threads until M11).
+    ///
+    /// A failed `accept` is logged to stderr and skipped; it never stops the server.
+    /// In M1 this function never returns; the `Result` is kept for future fatal errors
+    /// (e.g. shutdown in M11).
     pub fn serve(self) -> Result<(), Error> {
-        todo!()
+        for stream in self.listener.incoming() {
+            match stream {
+                Ok(stream) => {
+                    handle_connection(stream, Arc::clone(&self.db));
+                }
+                Err(e) => eprintln!("accept error: {e}"),
+            }
+        }
+
+        Ok(())
     }
 }
+
+fn handle_connection(_stream: TcpStream, _db: Arc<Database>) {}
