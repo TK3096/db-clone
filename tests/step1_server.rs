@@ -47,3 +47,19 @@ fn serve_accepts_tcp_connections() {
     thread::spawn(move || server.serve());
     TcpStream::connect_timeout(&addr, Duration::from_secs(5)).expect("connect to served address");
 }
+
+#[test]
+fn serve_keeps_accepting_after_first_connection() {
+    // A TCP connect can succeed through the kernel backlog even when nobody calls accept(),
+    // so a single connect cannot prove the loop keeps running. If serve() returns after one
+    // accept, the listener is dropped and the later connects are refused.
+    let dir = TempDir::new().unwrap();
+    let server = Server::bind(config(&dir)).unwrap();
+    let addr = server.local_addr();
+    thread::spawn(move || server.serve());
+    for i in 0..3 {
+        TcpStream::connect_timeout(&addr, Duration::from_secs(5))
+            .unwrap_or_else(|e| panic!("connection #{} refused: serve() stopped accepting ({e})", i + 1));
+        thread::sleep(Duration::from_millis(100));
+    }
+}
