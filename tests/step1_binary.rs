@@ -13,7 +13,10 @@ fn assert_usage_error(args: &[&str]) {
     let out = Command::new(BIN).args(args).output().unwrap();
     assert!(!out.status.success(), "{args:?} must exit non-zero");
     let stderr = String::from_utf8_lossy(&out.stderr).to_lowercase();
-    assert!(stderr.contains("usage"), "{args:?}: stderr must mention usage, got: {stderr}");
+    assert!(
+        stderr.contains("usage"),
+        "{args:?}: stderr must mention usage, got: {stderr}"
+    );
 }
 
 #[test]
@@ -47,12 +50,16 @@ fn starts_and_reports_listening_address() {
         .unwrap();
 
     let mut line = String::new();
-    BufReader::new(child.stderr.take().unwrap()).read_line(&mut line).unwrap();
+    BufReader::new(child.stderr.take().unwrap())
+        .read_line(&mut line)
+        .unwrap();
     let result = (|| {
         let addr: SocketAddr = line
             .trim()
             .strip_prefix("listening on ")
-            .ok_or_else(|| format!("first stderr line must be `listening on <addr>`, got {line:?}"))?
+            .ok_or_else(|| {
+                format!("first stderr line must be `listening on <addr>`, got {line:?}")
+            })?
             .parse()
             .map_err(|e| format!("bad address in {line:?}: {e}"))?;
         TcpStream::connect_timeout(&addr, Duration::from_secs(5)).map_err(|e| e.to_string())

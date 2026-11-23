@@ -8,7 +8,10 @@ use db_clone::server::{Config, Server};
 use tempfile::TempDir;
 
 fn config(dir: &TempDir) -> Config {
-    Config { port: 0, data_dir: dir.path().to_path_buf() }
+    Config {
+        port: 0,
+        data_dir: dir.path().to_path_buf(),
+    }
 }
 
 #[test]
@@ -16,7 +19,11 @@ fn bind_port_zero_reports_real_port() {
     let dir = TempDir::new().unwrap();
     let server = Server::bind(config(&dir)).unwrap();
     let addr = server.local_addr();
-    assert_ne!(addr.port(), 0, "local_addr must report the port the OS picked");
+    assert_ne!(
+        addr.port(),
+        0,
+        "local_addr must report the port the OS picked"
+    );
     assert!(addr.ip().is_loopback(), "must bind 127.0.0.1, got {addr}");
 }
 
@@ -34,8 +41,14 @@ fn bind_to_taken_port_is_an_error() {
     let d1 = TempDir::new().unwrap();
     let first = Server::bind(config(&d1)).unwrap();
     let d2 = TempDir::new().unwrap();
-    let taken = Config { port: first.local_addr().port(), data_dir: d2.path().to_path_buf() };
-    assert!(Server::bind(taken).is_err(), "binding a port already in use must return Err");
+    let taken = Config {
+        port: first.local_addr().port(),
+        data_dir: d2.path().to_path_buf(),
+    };
+    assert!(
+        Server::bind(taken).is_err(),
+        "binding a port already in use must return Err"
+    );
 }
 
 #[test]
@@ -58,8 +71,12 @@ fn serve_keeps_accepting_after_first_connection() {
     let addr = server.local_addr();
     thread::spawn(move || server.serve());
     for i in 0..3 {
-        TcpStream::connect_timeout(&addr, Duration::from_secs(5))
-            .unwrap_or_else(|e| panic!("connection #{} refused: serve() stopped accepting ({e})", i + 1));
+        TcpStream::connect_timeout(&addr, Duration::from_secs(5)).unwrap_or_else(|e| {
+            panic!(
+                "connection #{} refused: serve() stopped accepting ({e})",
+                i + 1
+            )
+        });
         thread::sleep(Duration::from_millis(100));
     }
 }
