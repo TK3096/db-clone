@@ -1,0 +1,17 @@
+# Local Postgres 18: test oracle, behaviour exploration, and a psql client.
+#   docker compose up -d
+#   docker compose exec pg psql -U postgres                                  # real PG 18
+#   docker compose exec pg psql -h host.docker.internal -p 5433 -U demo -X   # our server on the host
+#   docker compose down -v                                                   # remove everything incl. data
+services:
+  pg:
+    image: postgres:18
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+
+volumes:
+  pgdata:
