@@ -1,6 +1,4 @@
 //! Crate-wide error type. Maps to SQLSTATE codes in later steps.
-//! `std::error::Error`, `From<std::io::Error>`, `sqlstate()` and `is_fatal()`
-//! (see "Step 0 design decisions" on the M1 ticket).
 
 use std::fmt;
 

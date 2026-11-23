@@ -10,7 +10,7 @@ use crate::error::Error;
 pub struct Config {
     /// TCP port on 127.0.0.1. `0` lets the OS pick a free port.
     pub port: u16,
-    /// Data directory. Stored only in M1; first used in M2.
+    /// Data directory. Accepted but unused in M1; first used in M2.
     pub data_dir: PathBuf,
 }
 

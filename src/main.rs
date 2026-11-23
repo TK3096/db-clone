@@ -60,7 +60,7 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Config, String> {
                     .ok_or_else(|| "missing value for --data-dir".to_string())?;
                 data_dir = Some(PathBuf::from(value));
             }
-            _ => return Err(format!("unknown argument {arg}")),
+            _ => return Err(format!("unknown argument: {arg}")),
         }
     }
 
