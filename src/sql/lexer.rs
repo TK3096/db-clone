@@ -8,7 +8,8 @@
 //!   A number immediately followed by an identifier char (`123abc`) is a syntax error (PG 15+).
 //! - Strings: `'...'` with `''` as an escaped quote; may span lines; unterminated is an error.
 //! - Positions are 1-based **char** offsets (not bytes) of the token's first char.
-//! - Out of scope in M1 (syntax error): `"quoted identifiers"`, `--` comments, decimals like `1.5`.
+//! - `--` starts a line comment, skipped up to the end of the line.
+//! - Out of scope in M1 (syntax error): `"quoted identifiers"`, `/* block comments */`, decimals like `1.5`.
 
 use std::{iter::Peekable, str::Chars};
 
