@@ -122,7 +122,7 @@ impl<'a> Lexer<'a> {
             word.push(c);
         }
 
-        let lower = word.to_lowercase();
+        let lower = word.to_ascii_lowercase();
         match lower.as_str() {
             "select" => Token::Keyword(Keyword::Select),
             "true" => Token::Keyword(Keyword::True),
@@ -132,7 +132,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn lex_string(&mut self, start: usize) -> Result<Token, Error> {
-        self.advance();
+        self.advance(); // opening quote
         let mut value = String::new();
 
         loop {
@@ -179,22 +179,23 @@ impl<'a> Lexer<'a> {
 
             if c.is_whitespace() {
                 self.advance();
-            } else {
-                let token = match c {
-                    '\'' => self.lex_string(start)?,
-                    'a'..='z' | 'A'..='Z' | '_' => self.lex_word(),
-                    '0'..='9' => self.lex_number(start)?,
-                    _ => self.lex_operator(c).ok_or_else(|| Error::Syntax {
-                        message: format!("unexpected character \"{c}\""),
-                        position: start + 1,
-                    })?,
-                };
-
-                tokens.push(Spanned {
-                    token,
-                    position: start + 1,
-                });
+                continue;
             }
+
+            let token = match c {
+                '\'' => self.lex_string(start)?,
+                'a'..='z' | 'A'..='Z' | '_' => self.lex_word(),
+                '0'..='9' => self.lex_number(start)?,
+                _ => self.lex_operator(c).ok_or_else(|| Error::Syntax {
+                    message: format!("unexpected character \"{c}\""),
+                    position: start + 1,
+                })?,
+            };
+
+            tokens.push(Spanned {
+                token,
+                position: start + 1,
+            });
         }
 
         Ok(tokens)
