@@ -22,7 +22,9 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::Io(e) => write!(f, "I/O error: {e}"),
-            Error::Syntax { .. } => todo!(), // STUB (mentor): your message format
+            Error::Syntax { message, position } => {
+                write!(f, "syntax error at position {position}: {message}")
+            }
         }
     }
 }
