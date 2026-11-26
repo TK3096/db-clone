@@ -236,3 +236,52 @@ fn out_of_scope_syntax_is_rejected() {
     assert_syntax_error("SELECT 1.5", 9); // decimal: '.' is unknown in M1
     assert_syntax_error("ก", 1); // non-ASCII outside a string
 }
+
+// --- line comments (added after review: psql sends trailing `--` comments to the server) ----
+
+#[test]
+fn line_comment_is_skipped_not_lexed_as_two_minuses() {
+    // PG returns 2 here. Lexing `--1` as `- -1` would silently compute 2 - (-1) = 3.
+    assert_eq!(
+        lex("SELECT 2 --1"),
+        vec![at(Keyword(Select), 1), at(num("2"), 8)]
+    );
+    assert_eq!(tokens("2--1"), vec![num("2")]);
+}
+
+#[test]
+fn line_comment_ends_at_newline() {
+    // "SELECT 1 -- note\n" is 17 chars; ',' at 18, ' ' 19, '2' at 20.
+    assert_eq!(
+        lex("SELECT 1 -- note\n, 2"),
+        vec![
+            at(Keyword(Select), 1),
+            at(num("1"), 8),
+            at(Comma, 18),
+            at(num("2"), 20),
+        ]
+    );
+}
+
+#[test]
+fn line_comment_at_end_of_input_and_comment_only_input() {
+    assert_eq!(tokens("1 --"), vec![num("1")]);
+    assert_eq!(tokens("-- just a comment"), vec![]);
+    assert_eq!(tokens("--"), vec![]);
+}
+
+#[test]
+fn comment_body_is_not_lexed() {
+    // A quote or non-ASCII char inside a comment must not start a string or raise an error.
+    // '1' 1, ' ' 2, '-' 3, '-' 4, " it's 'ก" 5..=12, '\n' 13, '+' 14, ' ' 15, '2' 16
+    assert_eq!(
+        lex("1 -- it's 'ก\n+ 2"),
+        vec![at(num("1"), 1), at(Plus, 14), at(num("2"), 16)]
+    );
+}
+
+#[test]
+fn separated_minuses_are_still_two_minus_tokens() {
+    assert_eq!(tokens("1 - -1"), vec![num("1"), Minus, Minus, num("1")]);
+    assert_eq!(tokens("1 - - 1"), vec![num("1"), Minus, Minus, num("1")]);
+}
